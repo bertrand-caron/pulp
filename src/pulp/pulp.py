@@ -1667,8 +1667,7 @@ class LpProblem(object):
         self.solver = solver
         return status
 
-    def sequentialSolve(self, objectives, absoluteTols = None,
-                        relativeTols = None, solver = None, debug = False, processTimeout = None):
+    def sequentialSolve(self, objectives, debug = False, processTimeout = None, **solver_kwargs):
         """
         Solve the given Lp problem with several objective functions.
 
@@ -1676,21 +1675,24 @@ class LpProblem(object):
         and then adds the objective function as a constraint
 
         :param objectives: the list of objectives to be used to solve the problem
-        :param absoluteTols: the list of absolute tolerances to be applied to
-           the constraints should be +ve for a minimise objective
-        :param relativeTols: the list of relative tolerances applied to the constraints
-        :param solver: the specific solver to be used, defaults to the default solver.
+        :param debug: Run in debug mode.
         :param processTimeout: Timeout (in second) passed to Popen.wait() (for CBC solver only)
-
+        :param solver_kwargs: Solver parameters. This includes:
+            :param absoluteTols: the list of absolute tolerances to be applied to
+               the constraints should be +ve for a minimise objective
+            :param relativeTols: the list of relative tolerances applied to the constraints
+            :param solver: the specific solver to be used, defaults to the default solver.
         """
         #TODO Add a penalty variable to make problems elastic
         #TODO add the ability to accept different status values i.e. infeasible etc
+        solver = solver_kwargs['solver'] if 'solver' in solver_kwargs else None
+        absoluteTols = solver_kwargs['absoluteTols'] if 'absoluteTols' in solver_kwargs else None
+        relativeTols = solver_kwargs['relativeTols'] if 'relativeTols' in solver_kwargs else None
 
-        if not(solver): solver = self.solver
-        if not(solver): solver = LpSolverDefault
-        if not(absoluteTols):
+        solver = solver or self.solver or LpSolverDefault
+        if absoluteTols is None:
             absoluteTols = [0] * len(objectives)
-        if not(relativeTols):
+        if relativeTols is None:
             relativeTols  = [1] * len(objectives)
         #time it
         self.solutionTime = -clock()
